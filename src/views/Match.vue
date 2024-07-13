@@ -18,13 +18,13 @@
 </template>
 
 <script setup>
-import { data } from '@/store';
+import { dataStore } from '@/store';
 import { computed, ref } from 'vue';
 
 const scoreA = ref(0);
 const scoreB = ref(0);
 const rounds = ref([]);
-const store = data();
+const store = dataStore();
 let matches = JSON.parse( localStorage.getItem('matches')) || []
 function add() {
     rounds.value.push({

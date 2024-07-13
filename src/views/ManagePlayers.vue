@@ -16,11 +16,15 @@ import router from '@/router';
 import { supabase } from '@/supabase';
 import { onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { dataStore } from '@/store';
+const store = dataStore()
 let players = ref([])
+
 const getPlayers = async () => {
     //getting normal data
+    const { user } = store.session
     try {
-        const { data, error } = await supabase.from('player').select();
+        const { data, error } = await supabase.from('player').select().eq('user_id',user.id);
         if (error) {
             throw error;
         }
@@ -29,15 +33,6 @@ const getPlayers = async () => {
 
     } catch (err) {
         console.error(err);
-    }
-    //getting the pictures
-    try {
-        const { data, error } = await supabase.storage.from('avatars').list()
-        console.log("avatars",data)
-
-    }
-    catch (err) {
-        throw err
     }
 }
 onMounted(getPlayers)

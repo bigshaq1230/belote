@@ -1,7 +1,8 @@
 <template>
     <div>
-        <p>{{ player.id }}</p>
-        <p>{{ player.first_name }}</p>
+        <input type="text" v-model="player.first_name">
+        <input type="text" name="" id="" v-model="player.last_name">
+        <button @click="updateInfo">Update info</button>
         <img :src="avatar" alt="Player Avatar">
         <input type="file" id="single" accept="image/*" @change="upload" />
         <p>Or:</p>
@@ -15,6 +16,8 @@ import { useRoute } from 'vue-router';
 import { supabase } from '@/supabase';
 import { onMounted, ref } from 'vue';
 import isUrlHttp from 'is-url-http';
+import { dataStore } from '@/store';
+const store = dataStore()
 let player = ref({
     id: 0,
     first_name: 'first_name',
@@ -41,17 +44,23 @@ const getDetails = async () => {
     player.value = data;
     await getAvatar();
 };
-
+const updateInfo = async () => {
+    const { error } = await supabase.from('player').upsert(player.value)
+}
 const getAvatar = async () => {
     if (!player.value.avatar_url) {
         return;
     }
-    if (!isUrlHttp(player.value.avatar_url)) {
+    function isValidFormat(str) {
+        const pattern = /^\d+\.\w+$/;
+        return pattern.test(str);
+    }
+    if (isValidFormat(player.value.avatar_url)) {
 
         const { error, data } = await supabase
-        .storage
-        .from('avatars')
-        .download(player.value.avatar_url);
+            .storage
+            .from('avatars')
+            .download(player.value.avatar_url);
 
         if (error) {
             console.error('Error downloading avatar:', error);
@@ -62,7 +71,7 @@ const getAvatar = async () => {
         avatar.value = url;
     }
     else {
-    avatar.value = player.value.avatar_url;
+        avatar.value = player.value.avatar_url;
     }
 };
 
@@ -108,21 +117,22 @@ const setAvatarUrl = async () => {
         console.error('You must enter a URL.');
         return;
     }
-
+    if (!isUrlHttp(player.value.avatar_url)) {
+        const { error: deleteError } = await supabase.storage.from('avatars').remove([player.value.avatar_url])
+        if (deleteError) {
+            console.error(deleteError)
+        }
+    }
     player.value.avatar_url = avatarUrl.value;
-
     const { error, data } = await supabase
         .from('player')
         .update({ avatar_url: avatarUrl.value })
         .eq('id', player.value.id)
-        .select();
 
     if (error) {
         console.error('Error updating player avatar URL:', error);
         return;
     }
-
-    player.value = data[0];
     avatar.value = avatarUrl.value;
 };
 

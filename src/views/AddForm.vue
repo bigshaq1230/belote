@@ -30,16 +30,19 @@
 import { ref } from 'vue';
 import { supabase } from '@/supabase';
 import router from '@/router';
-
+import { dataStore } from '@/store';
+const store = dataStore()
 const firstName = ref('');
 const lastName = ref('');
 async function onSubmit() {
     if (firstName.value === "" || lastName.value === "") {
         return
     }
+    const { user } = store.session
     const { error } = await supabase.from('player').insert({
         first_name : firstName.value,
-        last_name : lastName.value
+        last_name : lastName.value,
+        user_id: user.id
     })
     if (error) {
         throw error
