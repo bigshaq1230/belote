@@ -15,6 +15,23 @@ async function handleSignInWithGoogle(response) {
   if (error) {
     console.error(error.message)
   }
+  supabase.auth.onAuthStateChange((_, _session) => {
+    store.session = _session
+  })
+  location.reload()
+}
+  const getPlayers_server = async () => {
+    const { user } = store.session
+    try {
+        const { data, error } = await supabase.from('player').select().eq('user_id',user.id);
+        if (error) {
+            throw error;
+        }
+        store.players.value = data;
+        
+    } catch (err) {
+        console.error(err);
+    }
 }
 onMounted( async() => {
   await supabase.auth.getSession().then(({ data }) => {
@@ -24,14 +41,23 @@ onMounted( async() => {
   supabase.auth.onAuthStateChange((_, _session) => {
     store.session = _session
   })
-  if (store.session === undefined) {
-    googleOneTap()
+  if (store.session === null) {
+    await googleOneTap()
       .then((response) => {
         handleSignInWithGoogle(response)
       })
       .catch((error) => {
         console.log("Handle the error", error)
       })
+      
+  }
+  
+  if (store.session === null) {
+    store.players.value = JSON.parse(localStorage.getItem('players'))
+    //add matches here when implemented
+  }
+  else {
+    getPlayers_server()
   }
 })
 </script>
@@ -59,7 +85,7 @@ onMounted( async() => {
 <style>
 body {
   font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  background-color: #0c120d;
 }
 
 .form-container {

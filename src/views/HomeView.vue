@@ -1,30 +1,28 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import router from '@/router';
-import { supabase } from '@/supabase';
+import { dataStore } from '@/store';
+import { storeToRefs } from 'pinia';
+const store = dataStore()
 const team_A = ref("")
 const team_B = ref("")
-const p1 = ref(0)
-const p2 = ref(0)
-const p3 = ref(0)
-const p4 = ref(0)
+const p1 = ref()
+const p2 = ref()
+const p3 = ref()
+const p4 = ref()
 
-let playerOptions = ref([])
+let { players: playerOptions } = storeToRefs(store)
 
-const getPlayers = async () => {
-  try {
-    const { data, error } = await supabase.from('player').select();
-    if (error) {
-      throw error;
-    }
-    console.log('selecting');
-    playerOptions.value = data;
-
-  } catch (err) {
-    console.error(err);
-  }
-}
-onMounted(getPlayers)
+let playerSelection = ref([
+  [0],
+  [0],
+  [0],
+  [0]
+])
+playerSelection.value[0] = playerOptions.value.value
+playerSelection.value[1] = playerOptions.value.value
+playerSelection.value[2] = playerOptions.value.value
+playerSelection.value[3] = playerOptions.value.value
 function handle() {
 
   let state = true
@@ -37,23 +35,33 @@ function handle() {
   }
 
   if (state) {
+    // fix 
     router.push('/match')
   }
   else console.log("error in form")
 }
-const select = (el,x) => {
+const select = (n, x) => {
 
-  el = x
-  console.log(el)
-  console.log(playerOptions.value[0].id)
+  for (let i = 0; i < 4; i++) {
 
-  const index = playerOptions.value.findIndex((l) => l.id == x);
-  console.log(index)
-  if (index !== -1) {
-    playerOptions.value.splice(index, 1);
+
+    // Find the index of the item with the given id
+    const index = playerSelection.value[n].findIndex((l) => l.id == x);
+
+    // Check if the item was found
+    if (index !== -1) {
+      // Remove the item from playerOptions
+      playerSelection.value[n].splice(index, 1);
+
+    } else {
+      console.error(`Item with id ${x} not found.`);
+    }
   }
-  console.log(playerOptions.value)
-}
+};
+
+
+
+
 </script>
 
 
@@ -61,25 +69,27 @@ const select = (el,x) => {
   <div id="flex">
     <div class="team">
       <label for="teamA">teamA: </label> <input type="text" id="teamA" v-model="team_A"> <br> <br>
+
       <label for="p1">p1:</label>
-      <select name="" id="p1" @change="select(p1,$event.target.value)">
-        <option v-for="player in playerOptions">{{ player.id }}</option>
+      <select name="" id="p1" @change="select(1, $event.target.value)">
+        <option v-for="player in playerSelection[0]">{{ player.id }}</option>
       </select>
+
       <label for="p2">p1:</label>
-      <select name="" id="p2" v-model="p2" @change="select($event.target.value)">
-        <option v-for="player in playerOptions">{{ player.id }}</option>
+      <select name="" id="p2" @change="select(1, $event.target.value)" v-model="p2">
+        <option v-for="player in playerSelection.value[1]">{{ player.id }}</option>
       </select>
     </div>
 
     <div class="team">
       <label for="teamB">teamB: </label> <input type="text" id="teamB" v-model="team_B"> <br><br>
       <label for="p3">p3:</label>
-      <select name="" id="p3" v-model="p3" @change="select($event.target.value)">
-        <option v-for="player in playerOptions">{{ player.id }}</option>
+      <select name="" id="p3" v-model="p3" @change="select(2, $event.target.value)">
+        <option v-for="player in playerSelection.value[2]">{{ player.id }}</option>
       </select>
       <label for="p4">p4:</label>
-      <select name="" id="p4" v-model="p4" @change="select($event.target.value)">
-        <option v-for="player in playerOptions">{{ player.id }}</option>
+      <select name="" id="p4" v-model="p4" @change="select(3, $event.target.value)">
+        <option v-for="player in playerSelection.value[3]">{{ player.id }}</option>
 
       </select>
     </div>
