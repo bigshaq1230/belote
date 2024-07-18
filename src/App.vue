@@ -1,12 +1,17 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { dataStore } from './store';
 import { supabase } from './supabase';
 import { onMounted } from 'vue';
 import { googleOneTap } from "vue3-google-login"
+import { storeToRefs } from 'pinia';
 
 const store = dataStore()
+const { session,nigger } = storeToRefs(store)
+console.log(nigger.value)
+nigger.value = 1
+console.log(store.nigger)
 async function handleSignInWithGoogle(response) {
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: 'google',
@@ -20,20 +25,22 @@ async function handleSignInWithGoogle(response) {
   })
   location.reload()
 }
-  const getPlayers_server = async () => {
-    const { user } = store.session
-    try {
-        const { data, error } = await supabase.from('player').select().eq('user_id',user.id);
-        if (error) {
-            throw error;
-        }
-        store.players.value = data;
-        
-    } catch (err) {
-        console.error(err);
+console.log('from app.vue')
+
+const getPlayers_server = async () => {
+  const { user } = store.session
+  try {
+    const { data, error } = await supabase.from('player').select().eq('user_id', user.id);
+    if (error) {
+      throw error;
     }
+    store.players = data;
+
+  } catch (err) {
+    console.error(err);
+  }
 }
-onMounted( async() => {
+onMounted(async () => {
   await supabase.auth.getSession().then(({ data }) => {
     store.session = data.session
   })
@@ -49,24 +56,31 @@ onMounted( async() => {
       .catch((error) => {
         console.log("Handle the error", error)
       })
-      
   }
-  
+
   if (store.session === null) {
-    store.players.value = JSON.parse(localStorage.getItem('players'))
+    store.players = JSON.parse(localStorage.getItem('players')) || []
     //add matches here when implemented
   }
   else {
     getPlayers_server()
   }
 })
+
+watch(session, () => {
+  if (store.session === null) {
+    store.players = JSON.parse(localStorage.getItem('players')) || []
+    //add matches here when implemented
+  }
+  else {
+    getPlayers_server()
+  }
+}, { deep: true })
 </script>
 
 <template>
   <header>
-
     <div class="wrapper">
-
       <nav>
         <ul>
           <li>

@@ -17,9 +17,10 @@ import { supabase } from '@/supabase';
 import { onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { dataStore } from '@/store';
+import { storeToRefs } from 'pinia';
 const store = dataStore()
-let players = ref([])
-players.value = store.players.value
+const { players } = storeToRefs(store)
+console.log(store.players)
 
 </script>
 

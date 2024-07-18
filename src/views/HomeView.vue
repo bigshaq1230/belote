@@ -14,7 +14,7 @@ const p4 = ref("");
 
 const { players: playerOptions } = storeToRefs(store);
 
-const playerSelection = ref([[], [], [], []]);
+const playerSelection = ref([]);
 
 watch(playerOptions, (newValue) => {
   console.log("playerOptions: ", playerOptions.value)
@@ -64,12 +64,12 @@ const select = (n, x) => {
 
       <label for="p1">p1:</label>
       <select name="" id="p1" v-model="p1" @change="select(0, $event.target.value)">
-        <option v-for="player in playerSelection[0]" :key="player.id" :value="player.id">{{ player.name }}</option>
+        <option v-for="player in playerSelection[0]" :key="player.id" :value="player.id">{{ player.first_name }}</option>
       </select>
 
       <label for="p2">p2:</label>
       <select name="" id="p2" v-model="p2" @change="select(1, $event.target.value)">
-        <option v-for="player in playerSelection[1]" :key="player.id" :value="player.id">{{ player.name }}</option>
+        <option v-for="player in playerSelection[1]" :key="player.id" :value="player.id">{{ player.first_name }}</option>
       </select>
     </div>
 
@@ -79,12 +79,12 @@ const select = (n, x) => {
 
       <label for="p3">p3:</label>
       <select name="" id="p3" v-model="p3" @change="select(2, $event.target.value)">
-        <option v-for="player in playerSelection[2]" :key="player.id" :value="player.id">{{ player.name }}</option>
+        <option v-for="player in playerSelection[2]" :key="player.id" :value="player.id">{{ player.first_name }}</option>
       </select>
 
       <label for="p4">p4:</label>
       <select name="" id="p4" v-model="p4" @change="select(3, $event.target.value)">
-        <option v-for="player in playerSelection[3]" :key="player.id" :value="player.id">{{ player.name }}</option>
+        <option v-for="player in playerSelection[3]" :key="player.id" :value="player.id">{{ player.first_name }}</option>
       </select>
     </div>
   </div>
