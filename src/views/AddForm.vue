@@ -16,41 +16,32 @@
 
 <script setup>
 import { ref } from 'vue';
-import { supabase } from '@/supabase';
-import router from '@/router';
 import { dataStore } from '@/store';
+import { storeToRefs } from 'pinia';
+import router from '@/router';
 const store = dataStore()
 const firstName = ref('');
 const lastName = ref('');
-let players = ref([])
-players.value = store.players.value
+const { players } = storeToRefs(store)
+console.log(players)
+console.log(players.value)
+// AddForm.vue
+import { insertplayer } from '../func'
+
 async function onSubmit() {
-    if (firstName.value === "" || lastName.value === "") {
-        return
-    }
-    if (store.session === null) {
-        players.value.push({
-            first_name: firstName.value,
-            last_name: lastName.value
-        })
-        localStorage.setItem('players', JSON.stringify(players.value))
-    }
-    else insertPlayertodb()
-    router.back()
+  if (firstName.value === "" || lastName.value === "") {
+    return;
+  }
+
+  const player = {
+    first_name: firstName.value,
+    last_name: lastName.value
+  };
+  await insertplayer(player);
+  router.back();
 }
 
-const insertPlayertodb = async () => {
 
-    const { user } = store.session
-    const { error } = await supabase.from('player').insert({
-        first_name: firstName.value,
-        last_name: lastName.value,
-        user_id: user.id
-    })
-    if (error) {
-        throw error
-    }
-}
 </script>
 
 <style></style>

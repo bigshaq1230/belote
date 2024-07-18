@@ -13,14 +13,11 @@
 
 <script setup>
 import router from '@/router';
-import { supabase } from '@/supabase';
-import { onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { dataStore } from '@/store';
 import { storeToRefs } from 'pinia';
 const store = dataStore()
 const { players } = storeToRefs(store)
-console.log(store.players)
 
 </script>
 

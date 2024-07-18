@@ -8,10 +8,8 @@ import { googleOneTap } from "vue3-google-login"
 import { storeToRefs } from 'pinia';
 
 const store = dataStore()
-const { session,nigger } = storeToRefs(store)
-console.log(nigger.value)
-nigger.value = 1
-console.log(store.nigger)
+const { session,players } = storeToRefs(store)
+
 async function handleSignInWithGoogle(response) {
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: 'google',
@@ -21,20 +19,21 @@ async function handleSignInWithGoogle(response) {
     console.error(error.message)
   }
   supabase.auth.onAuthStateChange((_, _session) => {
-    store.session = _session
+    session.value = _session
   })
   location.reload()
 }
-console.log('from app.vue')
 
 const getPlayers_server = async () => {
-  const { user } = store.session
+  console.log('getting players from server')
+  const { user } = session.value
   try {
     const { data, error } = await supabase.from('player').select().eq('user_id', user.id);
     if (error) {
       throw error;
     }
-    store.players = data;
+    console.log(data)
+    players.value = data;
 
   } catch (err) {
     console.error(err);
@@ -42,13 +41,13 @@ const getPlayers_server = async () => {
 }
 onMounted(async () => {
   await supabase.auth.getSession().then(({ data }) => {
-    store.session = data.session
+    session.value = data.session
   })
-  console.log(store.session)
+  console.log(session.value)
   supabase.auth.onAuthStateChange((_, _session) => {
-    store.session = _session
+    session.value = _session
   })
-  if (store.session === null) {
+  if (session.value === null) {
     await googleOneTap()
       .then((response) => {
         handleSignInWithGoogle(response)
@@ -58,8 +57,8 @@ onMounted(async () => {
       })
   }
 
-  if (store.session === null) {
-    store.players = JSON.parse(localStorage.getItem('players')) || []
+  if (session.value === null) {
+    players.value = JSON.parse(localStorage.getItem('players')) || []
     //add matches here when implemented
   }
   else {
@@ -68,8 +67,8 @@ onMounted(async () => {
 })
 
 watch(session, () => {
-  if (store.session === null) {
-    store.players = JSON.parse(localStorage.getItem('players')) || []
+  if (session.value === null) {
+    players.value = JSON.parse(localStorage.getItem('players')) || []
     //add matches here when implemented
   }
   else {
