@@ -2,12 +2,17 @@
     <div>
         <input type="text" v-model="player.first_name">
         <input type="text" name="" id="" v-model="player.last_name">
-        <button @click="updateInfo">Update info</button>
-        <img :src="player.avatar_url" alt="Player Avatar">
-        <input type="file" id="single" accept="image/*" @change="upload" />
+        
+        
+        <img :src="avatar" alt="Player Avatar">
+        
+        
+        <input type="file" id="single" accept="image/*" @change=" (evt) =>  files.value = evt.target.files"/>
         <p>Or:</p>
         <input type="text" v-model="avatarUrl" placeholder="Enter image URL" />
-        <button @click="setAvatarUrl">Set with URL!</button>
+
+        <button @click="updateInfo">Update info</button>
+
     </div>
 </template>
 
@@ -19,25 +24,23 @@ import isUrlHttp from 'is-url-http';
 import { dataStore } from '@/store';
 import { storeToRefs } from 'pinia';
 const store = dataStore()
-let avatarUrl = ref('');
+
+let input_url = ref('');
+let avatar_url = ref('')
+
+const { players, session, changes } = storeToRefs(store)
+
 let files = ref([]);
 const route = useRoute();
-const { players,session,changes } = storeToRefs(store)
 
 const index = route.params.id;
 
 let player = ref(players.value[index]);
-console.log(player.value)
 
 const getDetails = async () => {
-    if  (session.value == null) {
-        console.log('no session in editplayer')
-    }
-    else {
-        console.log("i have a session in editplayer")
-        await getAvatar();
-    }
+
 };
+
 const updateInfo = async () => {
     players.value[index] = player
     if (session.value === null) {
@@ -47,6 +50,7 @@ const updateInfo = async () => {
 }
 
 const getAvatar = async () => {
+    
     if (!player.value.avatar_url) {
         return;
     }
@@ -74,11 +78,9 @@ const getAvatar = async () => {
     }
 };
 
-const upload = async (evt) => {
-    files.value = evt.target.files;
-
+const upload = async () => {
+    
     if (!files.value || files.value.length === 0) {
-        console.error('You must select an image to upload.');
         return;
     }
 
@@ -96,33 +98,39 @@ const upload = async (evt) => {
         return;
     }
 
-    const { error, data } = await supabase
+    const { error } = await supabase
         .from('player')
         .update({ avatar_url: filePath })
         .eq('id', player.value.id)
-        .select();
+
 
     if (error) {
         console.error('Error updating player avatar:', error);
         return;
     }
 
-    player.value = data[0];
-    await getAvatar();
+    player.value.avatar_url = file.name
 };
 
+
+
+
 const setAvatarUrl = async () => {
-    if (!player.value.avatar_url) {
+    
+    
+    if (input_url.value === "") {
         console.error('You must enter a URL.');
         return;
     }
+
+
     if (!isUrlHttp(player.value.avatar_url)) {
         const { error: deleteError } = await supabase.storage.from('avatars').remove([player.value.avatar_url])
         if (deleteError) {
             console.error(deleteError)
         }
     }
-    player.value.avatar_url = avatarUrl.value;
+
     const { error, data } = await supabase
         .from('player')
         .update({ avatar_url: avatarUrl.value })
@@ -132,10 +140,17 @@ const setAvatarUrl = async () => {
         console.error('Error updating player avatar URL:', error);
         return;
     }
-    avatar.value = avatarUrl.value;
+    player.value.avatar_url = input_url.value;
 };
 
-onMounted(() => {
-    getDetails();
+onMounted(async () => {
+    if (session.value == null) {
+        console.log('no session in editplayer')
+    }
+    else {
+        console.log("i have a session in editplayer")
+        await getAvatar();
+    }
+    await getDetails();
 });
 </script>
