@@ -9,6 +9,24 @@ export const dataStore = defineStore('data', () => {
     let p4 = ref()
     let session = ref()
     let players = ref([])
-    return {team_A, team_B, p1, p2, p3, p4,session,players }
+    let changes = ref(JSON.parse(localStorage.getItem('changes')) ||
+    {
+        players: {
+            table: 'player',
+            removed: [],
+            edited: []
+        },
+        matches: {
+            table: 'match',
+            removed: [],
+            edited: []
+        },
+        rounds: {
+            table: 'round',
+            removed: [],
+            edited: []
+        }
+    })
+    return { team_A, team_B, p1, p2, p3, p4, session, players,changes }
 })
 

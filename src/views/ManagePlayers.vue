@@ -1,6 +1,6 @@
 <template>
     <div id="container" >
-        <div class="player" @click="router.push('/player/' + p.id)" v-for="p in players">
+        <div class="player" @click="router.push('/player/' + index)" v-for="(p,index) in players">
             {{ p.first_name }}
             {{ p.last_name }}
             <img v-if="p.avatar" :src="p.avatar" alt="">

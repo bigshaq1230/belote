@@ -3,7 +3,7 @@
         <input type="text" v-model="player.first_name">
         <input type="text" name="" id="" v-model="player.last_name">
         <button @click="updateInfo">Update info</button>
-        <img :src="avatar" alt="Player Avatar">
+        <img :src="player.avatar_url" alt="Player Avatar">
         <input type="file" id="single" accept="image/*" @change="upload" />
         <p>Or:</p>
         <input type="text" v-model="avatarUrl" placeholder="Enter image URL" />
@@ -17,36 +17,35 @@ import { supabase } from '@/supabase';
 import { onMounted, ref } from 'vue';
 import isUrlHttp from 'is-url-http';
 import { dataStore } from '@/store';
+import { storeToRefs } from 'pinia';
 const store = dataStore()
-let player = ref({
-    id: 0,
-    first_name: 'first_name',
-    last_name: 'last_name',
-    avatar_url: ''
-});
-let avatar = ref('');
 let avatarUrl = ref('');
 let files = ref([]);
 const route = useRoute();
-const id = route.params.id;
+const { players,session,changes } = storeToRefs(store)
+
+const index = route.params.id;
+
+let player = ref(players.value[index]);
+console.log(player.value)
 
 const getDetails = async () => {
-    const { error, data } = await supabase
-        .from('player')
-        .select()
-        .eq('id', id)
-        .single();
-
-    if (error) {
-        console.error('Error fetching player details:', error);
-        return;
+    if  (session.value == null) {
+        console.log('no session in editplayer')
     }
-    player.value = data;
-    await getAvatar();
+    else {
+        console.log("i have a session in editplayer")
+        await getAvatar();
+    }
 };
 const updateInfo = async () => {
+    players.value[index] = player
+    if (session.value === null) {
+        changes.value.players.edited.push(player)
+    }
     const { error } = await supabase.from('player').upsert(player.value)
 }
+
 const getAvatar = async () => {
     if (!player.value.avatar_url) {
         return;
@@ -113,7 +112,7 @@ const upload = async (evt) => {
 };
 
 const setAvatarUrl = async () => {
-    if (!avatarUrl.value) {
+    if (!player.value.avatar_url) {
         console.error('You must enter a URL.');
         return;
     }

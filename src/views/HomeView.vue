@@ -20,16 +20,6 @@ let playerSelection = ref([
     playerOptions
   ]);
 
-/*
-watch(playerOptions, () => {
-  playerSelection.value = [
-    playerOptions.value,
-    playerOptions.value,
-    playerOptions.value,
-    playerOptions.value,
-  ]
-})
-  */
 function handle() {
   let state = true;
 

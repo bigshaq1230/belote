@@ -1,14 +1,31 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { ref, watch } from 'vue';
-import { dataStore } from './store';
-import { supabase } from './supabase';
-import { onMounted } from 'vue';
-import { googleOneTap } from "vue3-google-login"
-import { storeToRefs } from 'pinia';
+import { ref, watch, onMounted } from 'vue'
+import { dataStore } from './store'
+import { supabase } from './supabase'
+import { googleOneTap } from 'vue3-google-login'
+import { storeToRefs } from 'pinia'
 
 const store = dataStore()
-const { session,players } = storeToRefs(store)
+const { session, players, changes } = storeToRefs(store)
+players.value = JSON.parse(localStorage.getItem('players')) || []
+
+async function syncVariable(obj) {
+  const { removed, edited, table } = obj
+  if (edited.length > 0) {
+    edited.forEach(edit => { edit.user_id = session.value.user.id })
+    const { error: upsertError } = await supabase.from(table).upsert(edited)
+    if (upsertError) {
+      console.error(upsertError)
+    }
+  }
+  if (removed.length > 0) {
+    const { error: removeError } = await supabase.from(table).delete().in('id', removed)
+    if (removeError) {
+      console.error(removeError)
+    }
+  }
+}
 
 async function handleSignInWithGoogle(response) {
   const { data, error } = await supabase.auth.signInWithIdToken({
@@ -24,21 +41,20 @@ async function handleSignInWithGoogle(response) {
   location.reload()
 }
 
-const getPlayers_server = async () => {
-  console.log('getting players from server')
-  const { user } = session.value
+const getPlayersFromServer = async () => {
+  console.log('Getting players from server')
   try {
-    const { data, error } = await supabase.from('player').select().eq('user_id', user.id);
+    const { data, error } = await supabase.from('player').select().eq('user_id', session.value.user.id)
     if (error) {
-      throw error;
+      throw error
     }
     console.log(data)
-    players.value = data;
-
+    players.value = data
   } catch (err) {
-    console.error(err);
+    console.error(err)
   }
 }
+
 onMounted(async () => {
   await supabase.auth.getSession().then(({ data }) => {
     session.value = data.session
@@ -47,33 +63,39 @@ onMounted(async () => {
   supabase.auth.onAuthStateChange((_, _session) => {
     session.value = _session
   })
-  if (session.value === null) {
+  if (!session.value) {
     await googleOneTap()
       .then((response) => {
         handleSignInWithGoogle(response)
       })
       .catch((error) => {
-        console.log("Handle the error", error)
+        console.log('Handle the error', error)
       })
-  }
-
-  if (session.value === null) {
-    players.value = JSON.parse(localStorage.getItem('players')) || []
-    //add matches here when implemented
-  }
-  else {
-    getPlayers_server()
+  } else {
+    const { rounds, players, matches } = changes.value
+    try {
+      await syncVariable(rounds)
+      await syncVariable(players)
+      await syncVariable(matches)
+    } catch (err) {
+      throw err
+    } finally {
+      changes.value = {
+        players: { table: 'player', removed: [], edited: [] },
+        matches: { table: 'match', removed: [], edited: [] },
+        rounds: { table: 'round', removed: [], edited: [] }
+      }
+    }
+    getPlayersFromServer()
   }
 })
 
-watch(session, () => {
-  if (session.value === null) {
-    players.value = JSON.parse(localStorage.getItem('players')) || []
-    //add matches here when implemented
-  }
-  else {
-    getPlayers_server()
-  }
+watch(players, () => {
+  localStorage.setItem('players', JSON.stringify(players.value))
+}, { deep: true })
+
+watch(changes, () => {
+  localStorage.setItem('changes', JSON.stringify(changes.value))
 }, { deep: true })
 </script>
 
@@ -83,10 +105,10 @@ watch(session, () => {
       <nav>
         <ul>
           <li>
-            <RouterLink to="/">new match</RouterLink>
+            <RouterLink to="/">New Match</RouterLink>
           </li>
           <li>
-            <RouterLink to="/manage">manage players</RouterLink>
+            <RouterLink to="/manage">Manage Players</RouterLink>
           </li>
         </ul>
       </nav>
@@ -94,7 +116,9 @@ watch(session, () => {
   </header>
 
   <RouterView />
+  <button @click ="supabase.auth.signOut()">sign out!</button>
 </template>
+
 <style>
 body {
   font-family: Arial, sans-serif;
