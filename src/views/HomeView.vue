@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch,computed } from 'vue';
 import router from '@/router';
 import { dataStore } from '@/store';
 import { storeToRefs } from 'pinia';
@@ -14,11 +14,11 @@ const p4 = ref("");
 const { players: playerOptions } = storeToRefs(store);
 
 let playerSelection = ref([
-    playerOptions,
-    playerOptions,
-    playerOptions,
-    playerOptions
-  ]);
+  playerOptions.value,
+  playerOptions.value,
+  playerOptions.value,
+  playerOptions.value
+]);
 
 function handle() {
   let state = true;
@@ -37,16 +37,21 @@ function handle() {
   }
 }
 
+
+const selectedPlayers = ref([p1, p2, p3, p4]);
+
 const select = (n, x) => {
-  playerSelection.value.forEach((selection, i) => {
-    if (i !== n) {
-      const index = selection.findIndex((player) => player.id == x);
-      if (index !== -1) {
-        selection.splice(index, 1);
-      }
-    }
+  selectedPlayers.value[n].value = x;
+};
+
+const filteredPlayers = (index) => {
+  return computed(() => {
+    const selectedIds = selectedPlayers.value.map(p => p.value);
+    return playerSelection.value[index].filter(player => !selectedIds.includes(player.id));
   });
 };
+console.log(filteredPlayers(0))
+d"
 </script>
 
 <template>
@@ -55,15 +60,16 @@ const select = (n, x) => {
       <label for="teamA">teamA: </label>
       <input type="text" id="teamA" v-model="team_A"> <br> <br>
 
+
       <label for="p1">p1:</label>
       <select name="" id="p1" v-model="p1" @change="select(0, $event.target.value)">
-        <option v-for="player in playerSelection[0].value" :key="player.id" :value="player.id">{{ player.first_name }}
+        <option v-for="player in filteredPlayers(0)" :key="player.id" :value="player.id">{{ player.first_name }}
         </option>
       </select>
 
       <label for="p2">p2:</label>
       <select name="" id="p2" v-model="p2" @change="select(1, $event.target.value)">
-        <option v-for="player in playerSelection[1].value" :key="player.id" :value="player.id">{{ player.first_name }}
+        <option v-for="player in filteredPlayers(1)" :key="player.id" :value="player.id">{{ player.first_name }}
         </option>
       </select>
     </div>
@@ -74,13 +80,13 @@ const select = (n, x) => {
 
       <label for="p3">p3:</label>
       <select name="" id="p3" v-model="p3" @change="select(2, $event.target.value)">
-        <option v-for="player in playerSelection[2].value" :key="player.id" :value="player.id">{{ player.first_name }}
+        <option v-for="player in filteredPlayers(2)" :key="player.id" :value="player.id">{{ player.first_name }}
         </option>
       </select>
 
       <label for="p4">p4:</label>
       <select name="" id="p4" v-model="p4" @change="select(3, $event.target.value)">
-        <option v-for="player in playerSelection[3].value" :key="player.id" :value="player.id">{{ player.first_name }}
+        <option v-for="player in filteredPlayers(3)" :key="player.id" :value="player.id">{{ player.first_name }}
         </option>
       </select>
     </div>

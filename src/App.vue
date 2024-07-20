@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeMount } from 'vue'
 import { dataStore } from './store'
 import { supabase } from './supabase'
 import { googleOneTap } from 'vue3-google-login'
@@ -55,7 +55,7 @@ const getPlayersFromServer = async () => {
   }
 }
 
-onMounted(async () => {
+onBeforeMount(async () => {
   await supabase.auth.getSession().then(({ data }) => {
     session.value = data.session
   })
@@ -119,7 +119,7 @@ watch(changes, () => {
   <button @click ="supabase.auth.signOut()">sign out!</button>
 </template>
 
-<style>
+<style src ="../src/assets/base.css">
 body {
   font-family: Arial, sans-serif;
   background-color: #0c120d;
