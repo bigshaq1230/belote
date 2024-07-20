@@ -12,5 +12,12 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
-  }
-})
+  },
+  build : {
+    rollupOptions:{
+      input:'./index.html'
+    }
+  },
+  optimizeDeps: {
+    include: ['vue', 'vue-router', '@vueuse/core']
+  }})
