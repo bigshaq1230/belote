@@ -51,7 +51,6 @@ const filteredPlayers = (index) => {
   });
 };
 console.log(filteredPlayers(0))
-d"
 </script>
 
 <template>
