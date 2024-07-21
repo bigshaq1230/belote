@@ -4,7 +4,7 @@
             <td>teamA: {{ totalA }}</td>
             <td>teamB: {{ totalB }}</td>
         </tr>
-        <tr v-for="(round,index) in rounds" :key="index">
+        <tr v-for="(round, index) in rounds" :key="index">
             <td>{{ round.A }}</td>
             <td>{{ round.B }}</td>
         </tr>
@@ -19,40 +19,41 @@
 
 <script setup>
 import { dataStore } from '@/store';
+import { supabase } from '@/supabase';
+import { storeToRefs } from 'pinia';
 import { computed, ref } from 'vue';
-
+import { useRoute } from 'vue-router';
+const route = useRoute()
 const scoreA = ref(0);
 const scoreB = ref(0);
-const rounds = ref([]);
 const store = dataStore();
-let matches = JSON.parse( localStorage.getItem('matches')) || []
-function add() {
-    rounds.value.push({
-        A: scoreA.value,
-        B: scoreB.value
-    });
+const { session, changes, matches } = storeToRefs(store)
+const index = matches.value.findIndex((l) => l.match_id == route.params.id)
+async function add() {
+    const round = {
+        scoreA: scoreA.value,
+        scoreB: scoreB.value,
+        match_id: route.params.id,
+        id: Date.now()
+    };
+    if (session.value == null) {
+        changes.value.rounds.edited.push(round)
+    }
+    else {
+        round.user_id = session.value.user.id
+        const { error } = await supabase.from('round').upsert(round)
+        if (error) console.error(error)
+    }
+    rounds.value.push(round)
     scoreA.value = 0;
     scoreB.value = 0;
 }
-const totalA = computed(() => rounds.value.reduce((sum, round) => sum + round.A, 0));
-const totalB = computed(() => rounds.value.reduce((sum, round) => sum + round.B, 0));
+const totalA = computed(() => rounds.value.reduce((sum, round) => sum + round.scoreA, 0));
+const totalB = computed(() => rounds.value.reduce((sum, round) => sum + round.scoreB, 0));
 function complete() {
     if (totalA.value === 0 && totalB.value === 0) {
         return
     }
-    matches.push({
-        teamA : store.team_A,
-        teamB : store.team_B,
-        p1:store.p1,
-        p2:store.p2,
-        p3:store.p3,
-        p4:store.p4,
-        scoreA : totalA.value,
-        scoreB : totalB.value
-    })
-    rounds.value = []
-    scoreA.value = 0
-    scoreB.value = 0
-    localStorage.setItem('matches',JSON.stringify(matches))
+    route.hash = '/'
 }
 </script>

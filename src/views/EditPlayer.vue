@@ -3,7 +3,7 @@
       <input type="text" v-model="player.first_name">
       <input type="text" v-model="player.last_name">
   
-      <img :src="avatar" alt="Player Avatar">
+      <img :src="player.avatar_url" alt="Player Avatar">
   
       <input type="file" id="single" accept="image/*" @change="basic_handle" />
       <p>Or:</p>
@@ -52,7 +52,7 @@
       if (error) console.error(error);
     }
   };
-  
+  /*
   const getAvatar = async () => {
     console.log(player.value.avatar_url);
     if (!player.value.avatar_url) {
@@ -81,7 +81,8 @@
       avatar.value = player.value.avatar_url;
     }
   };
-  
+    */
+
   const upload = async () => {
     console.log(files.value)
     if (files.value.length === 0) {
@@ -104,15 +105,12 @@
     
     player.value.avatar_url = filePath;
   };
-  
   onMounted(async () => {
     if (session.value == null) {
       console.log('no session in editplayer');
     } else {
       console.log("i have a session in editplayer");
-      await getAvatar();
     }
   });
-  watch(session,async() =>  await getAvatar(),{once:true})
   </script>
   

@@ -8,7 +8,8 @@ export const dataStore = defineStore('data', () => {
     let p3 = ref()
     let p4 = ref()
     let session = ref()
-    let players = ref([])
+    let players = ref(JSON.parse(localStorage.getItem('players')) || [{id:0}])
+    let matches = ref(JSON.parse(localStorage.getItem('matches')) || [])
     let changes = ref(JSON.parse(localStorage.getItem('changes')) ||
     {
         players: {
@@ -27,6 +28,6 @@ export const dataStore = defineStore('data', () => {
             edited: []
         }
     })
-    return { team_A, team_B, p1, p2, p3, p4, session, players,changes }
+    return { team_A, team_B, p1, p2, p3, p4, session, players,changes,rounds,matches }
 })
 

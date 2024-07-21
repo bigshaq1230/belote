@@ -32,21 +32,18 @@ async function onSubmit() {
 
   const player = {
     first_name: firstName.value,
-    last_name: lastName.value
+    last_name: lastName.value,
+    id: Date.now()
   };
-  const { session, players,changes } = storeToRefs(store);
+  const { session, players, changes } = storeToRefs(store);
 
-  if (session.value === null) {
+  players.value.push(player);
+  if (session.value == null) {
     changes.value.players.edited.push(player)
-    players.value.push(player);
   } else {
     const user = session.value?.user;
-    console.log(user)
-    const { error } = await supabase.from('player').insert({
-      first_name: player.first_name,
-      last_name: player.last_name,
-      user_id: user?.id,
-    });
+    player.value.user_id = user.id
+    const { error } = await supabase.from('player').insert(player.value);
     if (error) {
       throw error;
     }

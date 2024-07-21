@@ -5,10 +5,10 @@ import { dataStore } from './store'
 import { supabase } from './supabase'
 import { googleOneTap } from 'vue3-google-login'
 import { storeToRefs } from 'pinia'
+import { AuthWeakPasswordError } from '@supabase/supabase-js'
 
 const store = dataStore()
-const { session, players, changes } = storeToRefs(store)
-players.value = JSON.parse(localStorage.getItem('players')) || []
+const { session, players, changes, rounds, matches } = storeToRefs(store)
 
 async function syncVariable(obj) {
   const { removed, edited, table } = obj
@@ -71,7 +71,8 @@ onBeforeMount(async () => {
       .catch((error) => {
         console.log('Handle the error', error)
       })
-  } else {
+  }
+  else {
     const { rounds, players, matches } = changes.value
     try {
       await syncVariable(rounds)
@@ -86,16 +87,72 @@ onBeforeMount(async () => {
         rounds: { table: 'round', removed: [], edited: [] }
       }
     }
-    getPlayersFromServer()
+    await getPlayersFromServer()
+    await getMatches()
+    await getRounds()
+    resolve_avatar_url()
   }
 })
 
+
+
+async function resolve_avatar_url() {
+
+
+  function isValidFormat(str) {
+    const pattern = /^\d+\.\w+$/;
+    return pattern.test(str);
+  }
+
+  players.value.forEach(async (player) => {
+    if (!player.avatar_url) {
+      return;
+    }
+
+    if (isValidFormat(player.avatar_url)) {
+      const { error, data } = await supabase
+        .storage
+        .from('avatars')
+        .download(player.avatar_url);
+
+      if (error) {
+        console.error('Error downloading avatar:', error);
+        return;
+      }
+
+      const url = URL.createObjectURL(data);
+      player.avatar_url = url;
+    }
+
+  });
+};
+async function getRounds() {
+  const { error, data } = await supabase.from('round').select().eq('user_id', session.value.user.id)
+  if (error) console.log(error)
+  else {
+    matches.value.forEach(match => {
+      match.rounds = []
+      data.forEach(round => {
+        match.rounds.push(round)
+      });
+    });
+  }
+}
+async function getMatches() {
+  const { error, data } = await supabase.from('match').select().eq('user_id', session.value.user.id)
+  if (error) console.log(error)
+  else {
+    matches.value = data
+  }
+}
 watch(players, () => {
   localStorage.setItem('players', JSON.stringify(players.value))
 }, { deep: true })
-
 watch(changes, () => {
   localStorage.setItem('changes', JSON.stringify(changes.value))
+}, { deep: true })
+watch(matches, () => {
+  localStorage.setItem('matches', JSON.stringify(matches.value))
 }, { deep: true })
 </script>
 
@@ -116,10 +173,10 @@ watch(changes, () => {
   </header>
 
   <RouterView />
-  <button @click ="supabase.auth.signOut()">sign out!</button>
+  <button @click="supabase.auth.signOut()">sign out!</button>
 </template>
 
-<style src ="../src/assets/base.css">
+<style src="../src/assets/base.css">
 body {
   font-family: Arial, sans-serif;
   background-color: #0c120d;
@@ -161,5 +218,10 @@ button {
 
 button:hover {
   background-color: #45a049;
+}
+
+img {
+  height: 100%;
+
 }
 </style>

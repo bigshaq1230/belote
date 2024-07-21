@@ -13,10 +13,9 @@ const router = createRouter({
       component: HomeView
     },
     {
-      path: '/match',
+      path: '/match/:id',
       name: 'match',
       component: Match,
-      props: true
     },
     {
       path: '/manage',
