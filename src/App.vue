@@ -1,6 +1,6 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import { ref, watch, onMounted, onBeforeMount } from 'vue'
+import {  watch,  onBeforeMount } from 'vue'
 import { dataStore } from './store'
 import { supabase } from './supabase'
 import { googleOneTap } from 'vue3-google-login'
