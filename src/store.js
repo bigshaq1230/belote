@@ -28,6 +28,6 @@ export const dataStore = defineStore('data', () => {
             edited: []
         }
     })
-    return { team_A, team_B, p1, p2, p3, p4, session, players,changes,rounds,matches }
+    return { team_A, team_B, p1, p2, p3, p4, session, players,changes,matches }
 })
 

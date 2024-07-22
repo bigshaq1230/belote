@@ -18,7 +18,6 @@ import { ref, onMounted } from 'vue';
 
 const store = dataStore();
 const { players } = storeToRefs(store);
-const avatars = ref({});
 
 
 </script>

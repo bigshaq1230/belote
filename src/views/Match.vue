@@ -1,12 +1,12 @@
 <template>
-    <table>
+    <table v-if="index !== -1">
         <tr>
             <td>teamA: {{ totalA }}</td>
             <td>teamB: {{ totalB }}</td>
         </tr>
-        <tr v-for="(round, index) in rounds" :key="index">
-            <td>{{ round.A }}</td>
-            <td>{{ round.B }}</td>
+        <tr v-for="round in matches[index].rounds" :key="round.id">
+            <td>{{ round.scoreA }}</td>
+            <td>{{ round.scoreB }}</td>
         </tr>
         <tr>
             <td><input type="number" id="scoreA" v-model="scoreA"></td>
@@ -14,21 +14,33 @@
             <td><button @click="add">add!</button></td>
         </tr>
     </table>
-    <button @click="complete">mark complete</button>
+    <div v-else>
+        <p>Match not found</p>
+    </div>
+    <button @click="complete" v-if="index !== -1">mark complete</button>
 </template>
 
 <script setup>
 import { dataStore } from '@/store';
 import { supabase } from '@/supabase';
 import { storeToRefs } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, onBeforeMount, ref } from 'vue';
 import { useRoute } from 'vue-router';
-const route = useRoute()
+import { watch } from 'vue';
+
+const route = useRoute();
 const scoreA = ref(0);
 const scoreB = ref(0);
 const store = dataStore();
-const { session, changes, matches } = storeToRefs(store)
-const index = matches.value.findIndex((l) => l.match_id == route.params.id)
+const { session, changes, matches } = storeToRefs(store);
+let index = matches.value.findIndex((l) => l.id == route.params.id)
+
+if (index.value === -1) {
+    console.error(`Match with id ${route.params.id} not found`);
+}
+
+console.log("rounds:", matches.value[index]?.rounds);
+
 async function add() {
     const round = {
         scoreA: scoreA.value,
@@ -37,23 +49,24 @@ async function add() {
         id: Date.now()
     };
     if (session.value == null) {
-        changes.value.rounds.edited.push(round)
+        changes.value.rounds.edited.push(round);
+    } else {
+        round.user_id = session.value.user.id;
+        const { error } = await supabase.from('round').upsert(round);
+        if (error) console.error(error);
     }
-    else {
-        round.user_id = session.value.user.id
-        const { error } = await supabase.from('round').upsert(round)
-        if (error) console.error(error)
-    }
-    rounds.value.push(round)
+    matches.value[index].rounds.push(round);
     scoreA.value = 0;
     scoreB.value = 0;
 }
-const totalA = computed(() => rounds.value.reduce((sum, round) => sum + round.scoreA, 0));
-const totalB = computed(() => rounds.value.reduce((sum, round) => sum + round.scoreB, 0));
+
+const totalA = computed(() => matches.value[index]?.rounds.reduce((sum, round) => sum + round.scoreA, 0) || 0);
+const totalB = computed(() => matches.value[index]?.rounds.reduce((sum, round) => sum + round.scoreB, 0) || 0);
+
 function complete() {
     if (totalA.value === 0 && totalB.value === 0) {
-        return
+        return;
     }
-    route.hash = '/'
+    route.hash = '/';
 }
 </script>

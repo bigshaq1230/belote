@@ -6,52 +6,62 @@ import { storeToRefs } from 'pinia';
 import { supabase } from '@/supabase';
 const router = useRouter();
 const store = dataStore();
-const { players: playerOptions, team_A, team_B, p1, p2, p3, p4,session,changes } = storeToRefs(store);
+const { players: playerOptions, team_A, team_B, p1, p2, p3, p4, session, changes, matches } = storeToRefs(store);
 
-//TODO MAKES SELECTING THE SMAE PLAYER FROM 2 DIFF PLACES NOT POSSIBLE 
+//TODO MAKES SELECTING THE SMAE PLAYER FROM 2 DIFF PLACES NOT POSSIBLE
 
-const handle = async() => {
+const handle = async () => {
   let state = true;
 
   if (team_A.value === '' || team_B.value === '') {
     state = false;
     return
   }
-  const list = [p1,p2,p3,p4]
+  const list = [p1, p2, p3, p4]
   for (let i = 0; i < list.length; i++) {
     for (let j = 0; j < list.length; j++) {
       if (i === j) {
         continue
       }
       if (list[i].value === list[j].value) {
-        state = false 
+        state = false
         return
       }
-      
+
     }
   }
-  
+
   if (state) {
+    const match2 = {
+      team_A: team_A.value,
+      team_B: team_B.value,
+      p1: p1.value,
+      p2: p2.value,
+      p3: p3.value,
+      p4: p4.value,
+      id: Date.now()
+    }
     const match = {
       team_A: team_A.value,
-      team_B:team_B.value,
-      p1:p1.value,
-      p2:p2.value,
-      p3:p3.value,
-      p4:p4.value,
-      id : Date.now()
+      team_B: team_B.value,
+      p1: p1.value,
+      p2: p2.value,
+      p3: p3.value,
+      p4: p4.value,
+      id: Date.now(),
+      rounds:[]
     }
-
     if (session.value == null) {
-      changes.value.matches.edited.push(match)
+      await changes.value.matches.edited.push(match2)
     }
     else {
       match.user_id = session.value.user.id
       const { error } = await supabase.from('match').upsert(match)
       if (error) console.log(error)
     }
-    router.push('/match/'+ match.id)
-  
+    matches.value.push(match)
+    router.push('/match/' + match.id)
+
   } else {
     console.log("error in form");
   }
@@ -64,7 +74,7 @@ const handle = async() => {
   <div id="flex">
     <div class="team">
       <label for="teamA">teamA: </label>
-      <input type="text" id="teamA" v-model="team_A"> 
+      <input type="text" id="teamA" v-model="team_A">
       <label for="">p1</label>
       <select name="" id="" v-model="p1">
         <option v-for="player in playerOptions" :value="player.id"> {{ player.first_name }}</option>
@@ -74,13 +84,13 @@ const handle = async() => {
         <option v-for="player in playerOptions" :value="player.id"> {{ player.first_name }}</option>
       </select>
     </div>
-    
-    
-    
+
+
+
     <div class="team">
 
       <label for="teamB">teamB: </label>
-      <input type="text" id="teamB" v-model="team_B"> 
+      <input type="text" id="teamB" v-model="team_B">
 
       <label for="">p3</label>
       <select name="" id="" v-model="p3">
