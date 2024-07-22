@@ -28,6 +28,7 @@ export const dataStore = defineStore('data', () => {
             edited: []
         }
     })
-    return { team_A, team_B, p1, p2, p3, p4, session, players,changes,matches }
+    let avatars = ref([])
+    return { team_A, team_B, p1, p2, p3, p4, session, players,changes,matches,avatars }
 })
 

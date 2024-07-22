@@ -1,13 +1,13 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import {  watch,  onBeforeMount } from 'vue'
+import {  watch, onMounted } from 'vue'
 import { dataStore } from './store'
 import { supabase } from './supabase'
 import { googleOneTap } from 'vue3-google-login'
 import { storeToRefs } from 'pinia'
 
 const store = dataStore()
-const { session, players, changes, matches } = storeToRefs(store)
+const { session, players, changes, matches,avatars } = storeToRefs(store)
 console.log(changes.value)
 async function syncVariable(obj) {
   const { removed, edited, table } = obj
@@ -45,7 +45,7 @@ async function handleSignInWithGoogle(response) {
 const getPlayers = async () => {
   console.log('Getting players from server')
   try {
-    const { data, error } = await supabase.from('player').select().eq('user_id', session.value.user.id)
+    const { data, error } = await supabase.from('player').select().eq('user_id', session.value.user.id).order('id')
     if (error) throw error
     console.log(data)
     players.value = data
@@ -54,7 +54,7 @@ const getPlayers = async () => {
   }
 }
 
-onBeforeMount(async () => {
+onMounted(async () => {
   try {
     const { data } = await supabase.auth.getSession()
     session.value = data.session
@@ -92,7 +92,7 @@ onBeforeMount(async () => {
       await getPlayers()
       await getMatches()
       await getRounds()
-      resolve_avatar_url()
+      await resolve_avatar_url()
     }
   } catch (error) {
     console.error('Initialization error:', error)
@@ -110,13 +110,19 @@ async function resolve_avatar_url() {
 
     if (isValidFormat(player.avatar_url)) {
       try {
+        console.log(`Downloading avatar for player: ${player.avatar_url}`);
         const { error, data } = await supabase.storage.from('avatars').download(player.avatar_url)
         if (error) throw error
+        if (!data) throw new Error('No data returned from Supabase')
+
         const url = URL.createObjectURL(data)
-        player.avatar_url = url
+        console.log(`Resolved URL: ${url}`);
+        avatars.value.push(url)
       } catch (error) {
         console.error('Error downloading avatar:', error)
       }
+    } else {
+      avatars.value.push(player.avatar_url)
     }
   })
 }

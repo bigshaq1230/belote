@@ -2,7 +2,7 @@
   <div id="container">
     <div class="player" @click="router.push('/player/' + index)" v-for="(p, index) in players" :key="index">
       {{ p.first_name }} {{ p.last_name }}
-      <img v-if="p.avatar_url" :src="p.avatar_url" alt="">
+      <img v-if="p.avatar_url" :src="avatars[index]" alt="">
     </div>
   </div>
   <RouterLink to="/add"><button>add a player</button></RouterLink>
@@ -17,7 +17,7 @@ import { supabase } from '@/supabase';
 import { ref, onMounted } from 'vue';
 
 const store = dataStore();
-const { players } = storeToRefs(store);
+const { players,avatars } = storeToRefs(store);
 
 
 </script>
