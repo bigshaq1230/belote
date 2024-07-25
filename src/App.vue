@@ -8,7 +8,6 @@ import { storeToRefs } from 'pinia'
 
 const store = dataStore()
 const { session, players, changes, matches,avatars } = storeToRefs(store)
-console.log(changes.value)
 async function syncVariable(obj) {
   const { removed, edited, table } = obj
   try {
@@ -117,12 +116,13 @@ async function resolve_avatar_url() {
 
         const url = URL.createObjectURL(data)
         console.log(`Resolved URL: ${url}`);
-        avatars.value.push(url)
+        player.on_device_url = url
+        
       } catch (error) {
         console.error('Error downloading avatar:', error)
       }
     } else {
-      avatars.value.push(player.avatar_url)
+      player.on_device_url = player.avatar_url
     }
   })
 }

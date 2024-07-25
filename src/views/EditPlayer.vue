@@ -3,17 +3,18 @@
       <input type="text" v-model="player.first_name">
       <input type="text" v-model="player.last_name">
 
-      <img :src="avatars[index]" alt="Player Avatar">
+      <img :src="player.on_device_url" alt="Player Avatar" >
       <br>
-      temp url: {{ avatars[index] }}
+      temp url: {{ player.on_device_url}}
       <br>
       actual_url: {{ player.avatar_url }}
       <br>
       <input type="file" id="single" accept="image/*" @change="basic_handle" />
       <p>Or:</p>
-      <input type="text" v-model="input_url" placeholder="Enter image URL" @input="avatars[index] = input_url" />
-
+      <input type="text" v-model="input_url" placeholder="Enter image URL" @input="player.on_device_url = input_url" />
+<br>
       <button @click="updateInfo">Update info</button>
+      <button @click="deletePlayer"> delete player! </button>
     </div>
   </template>
 
@@ -28,7 +29,7 @@
   const { players, session, changes,avatars } = storeToRefs(store);
 
   const route = useRoute();
-  const index = route.params.id;
+  const index = players.value.findIndex( (l) => l.id == route.params.id)
 
   let player = ref(players.value[index]);
   let input_url = ref('');
@@ -38,20 +39,35 @@
   function basic_handle(evt) {
     files.value = evt.target.files;
     const file = files.value[0]
-    avatars.value[index] = URL.createObjectURL(file)
+    player.value.on_device_url = URL.createObjectURL(file)
   }
-
+const deletePlayer =  async() => {
+  players.value.splice(index,1)
+  if(session.value == null)
+  changes.value.players.deleted.push(player.value.id)
+  else {
+    const { error } = await supabase.from('player').delete().eq('id',player.value.id)
+    if (error) console.error(error)
+  }
+}
   const updateInfo = async () => {
     console.log('updating info');
     players.value[index] = player.value;
+    let x = {
+      id : player.value.id,
+      first_name : player.value.first_name,
+      last_name : player.value.last_name
+    }
     if (session.value == null) {
-      changes.value.players.edited.push(player.value);
+      changes.value.players.edited.push(x);
     } else {
+      x.user_id = player.value.user_id
       if (files.value.length > 0) {
         await upload();
+        x.avatar_url = player.value.avatar_url
       }
-      else if (input_url.value !== "") player.value.avatar_url = input_url
-      const { error } = await supabase.from('player').upsert(player.value);
+      else if (input_url.value !== "") x.avatar_url = input_url
+      const { error } = await supabase.from('player').upsert(x);
 
       if (error) console.error(error);
     }
@@ -87,3 +103,8 @@
     }
   });
   </script>
+<style> 
+  img {
+    width: 200px;
+  }
+</style>
