@@ -1,10 +1,10 @@
 <template>
     <table v-if="index !== -1">
         <tr>
-            <td>teamA: {{ totalA }}</td>
-            <td>teamB: {{ totalB }}</td>
+            <td>{{match.team_A}}: {{ totalA }}</td>
+            <td> {{ match.team_B }}: {{ totalB }}</td>
         </tr>
-        <tr v-for="round in matches[index].rounds" :key="round.id">
+        <tr v-for="round in match.rounds" :key="round.id">
             <td>{{ round.scoreA }}</td>
             <td>{{ round.scoreB }}</td>
         </tr>
@@ -34,12 +34,12 @@ const scoreB = ref(0);
 const store = dataStore();
 const { session, changes, matches } = storeToRefs(store);
 let index = matches.value.findIndex((l) => l.id == route.params.id)
-
+let match = ref(matches.value[index])
 if (index.value === -1) {
     console.error(`Match with id ${route.params.id} not found`);
 }
 
-console.log("rounds:", matches.value[index]?.rounds);
+console.log("rounds:", match.value?.rounds);
 
 async function add() {
     const round = {
@@ -55,13 +55,13 @@ async function add() {
         const { error } = await supabase.from('round').upsert(round);
         if (error) console.error(error);
     }
-    matches.value[index].rounds.push(round);
+    match.value.rounds.push(round);
     scoreA.value = 0;
     scoreB.value = 0;
 }
 
-const totalA = computed(() => matches.value[index]?.rounds.reduce((sum, round) => sum + round.scoreA, 0) || 0);
-const totalB = computed(() => matches.value[index]?.rounds.reduce((sum, round) => sum + round.scoreB, 0) || 0);
+const totalA = computed(() => match.value?.rounds.reduce((sum, round) => sum + round.scoreA, 0) || 0);
+const totalB = computed(() => match.value?.rounds.reduce((sum, round) => sum + round.scoreB, 0) || 0);
 
 function complete() {
     if (totalA.value === 0 && totalB.value === 0) {

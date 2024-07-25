@@ -32,6 +32,8 @@ const handle = async () => {
   }
 
   if (state) {
+    const id = Date.now()
+
     const match2 = {
       team_A: team_A.value,
       team_B: team_B.value,
@@ -39,8 +41,8 @@ const handle = async () => {
       p2: p2.value,
       p3: p3.value,
       p4: p4.value,
-      id: Date.now()
-    }
+      id: id
+      }
     const match = {
       team_A: team_A.value,
       team_B: team_B.value,
@@ -48,7 +50,7 @@ const handle = async () => {
       p2: p2.value,
       p3: p3.value,
       p4: p4.value,
-      id: Date.now(),
+      id: id,
       rounds:[]
     }
     if (session.value == null) {
@@ -56,7 +58,8 @@ const handle = async () => {
     }
     else {
       match.user_id = session.value.user.id
-      const { error } = await supabase.from('match').upsert(match)
+      match2.user_id = session.value.user.id
+      const { error } = await supabase.from('match').upsert(match2)
       if (error) console.log(error)
     }
     matches.value.push(match)
